@@ -16,6 +16,8 @@ module SlaActivityMessageHandler
   end
 
   def sla_policy_name
+    return '' unless defined?(SlaPolicy)
+
     SlaPolicy.find_by(id: sla_policy_id)&.name || ''
   end
 
