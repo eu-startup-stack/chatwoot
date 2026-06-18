@@ -1,6 +1,6 @@
 <script>
 // utils and composables
-import { login } from '../../api/auth';
+import { login, proxyLogin } from '../../api/auth';
 import { mapGetters } from 'vuex';
 import { useAlert } from 'dashboard/composables';
 import { required, email } from '@vuelidate/validators';
@@ -74,6 +74,7 @@ export default {
       mfaToken: null,
       sessionsLimitReached: false,
       limitedSessions: [],
+      proxyAuthInProgress: false,
     };
   },
   validations() {
@@ -108,6 +109,11 @@ export default {
     },
   },
   created() {
+    if (window.chatwootConfig?.authentikProxyLoginEnabled === 'true') {
+      this.proxyAuthInProgress = true;
+      this.submitProxyLogin();
+      return;
+    }
     if (this.ssoAuthToken) {
       this.submitLogin();
     }
@@ -228,6 +234,21 @@ export default {
 
       this.submitLogin();
     },
+    submitProxyLogin() {
+      this.loginApi.showLoading = true;
+      proxyLogin()
+        .then(() => {
+          // redirect handled inside proxyLogin; nothing to do here
+        })
+        .catch(response => {
+          this.loginApi.showLoading = false;
+          this.proxyAuthInProgress = false;
+          this.loginApi.hasErrored = true;
+          this.showAlertMessage(
+            response?.message || this.$t('LOGIN.API.UNAUTH')
+          );
+        });
+    },
     handleMfaVerified() {
       // MFA verification successful, continue with login
       this.handleImpersonation();
@@ -336,7 +357,7 @@ export default {
 
     <!-- Regular Login Section -->
     <section
-      v-else
+      v-else-if="!proxyAuthInProgress"
       class="bg-white shadow sm:mx-auto mt-11 sm:w-full sm:max-w-lg dark:bg-n-solid-2 p-11 sm:shadow-lg sm:rounded-lg"
       :class="{
         'mb-8 mt-15': !showGoogleOAuth,
@@ -416,6 +437,11 @@ export default {
       <div v-else class="flex items-center justify-center">
         <Spinner color-scheme="primary" size="" />
       </div>
+    </section>
+
+    <!-- Proxy Auth In Progress Section -->
+    <section v-else class="mt-11 flex items-center justify-center">
+      <Spinner color-scheme="primary" size="" />
     </section>
   </main>
 </template>

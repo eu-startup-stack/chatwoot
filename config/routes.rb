@@ -8,6 +8,8 @@ Rails.application.routes.draw do
     omniauth_callbacks: 'devise_overrides/omniauth_callbacks'
   }, via: [:get, :post]
 
+  post 'auth/proxy_login', to: 'devise_overrides/proxy_logins#create'
+
   post 'resend_confirmation', to: 'auth/resend_confirmations#create'
 
   ## renders the frontend paths only if its not an api only server

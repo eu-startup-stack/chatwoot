@@ -58,6 +58,20 @@ export const login = async ({
   }
 };
 
+export const proxyLogin = async () => {
+  try {
+    const response = await wootAPI.post('auth/proxy_login');
+    setAuthCredentials(response);
+    clearLocalStorageOnLogout();
+    window.location = getLoginRedirectURL({ user: response.data.data });
+    return null;
+  } catch (error) {
+    const loginError = new Error(parseAPIErrorResponse(error));
+    loginError.errorCode = error.response?.data?.error_code;
+    throw loginError;
+  }
+};
+
 export const register = async creds => {
   try {
     const { fullName, accountName } = getCredentialsFromEmail(creds.email);
